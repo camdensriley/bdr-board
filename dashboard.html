@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camden's BDR Board</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1419; color: #e8eaed; padding: 24px; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2a3038; }
+  .header h1 { font-size: 24px; font-weight: 600; }
+  .subtitle { font-size: 13px; color: #8b95a3; margin-top: 4px; }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .stat { text-align: right; font-size: 12px; color: #8b95a3; }
+  .stat strong { color: #e8eaed; font-size: 14px; }
+  .refresh-btn { background: #1d4e89; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
+  .refresh-btn:hover { background: #2563a8; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #2a3038; }
+  .tab { padding: 10px 18px; background: none; border: none; color: #8b95a3; cursor: pointer; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; }
+  .tab:hover { color: #e8eaed; }
+  .tab.active { color: #e8eaed; border-bottom-color: #4a9eff; }
+  .tab .count { background: #2a3038; color: #8b95a3; padding: 2px 7px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
+  .tab.active .count { background: #4a9eff; color: #0f1419; }
+  .tab.has-queue .count { background: #d97706; color: white; }
+  .section-header { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8b95a3; margin: 24px 0 10px 2px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .section-header.rollover { color: #d97757; }
+  .section-header.queue { color: #fbbf24; font-size: 13px; }
+  .section-header .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .section-header .help-text { font-size: 11px; text-transform: none; letter-spacing: normal; color: #6b7280; font-weight: normal; margin-left: 8px; font-style: italic; }
+  .card { background: #1a1f26; border: 1px solid #2a3038; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; position: relative; }
+  .card:hover { border-color: #3a424d; }
+  .card.completed { opacity: 0.45; }
+  .card.completed .task-title { text-decoration: line-through; }
+  .card.queue-card { border-color: #d97706; background: #1f1a14; }
+  .card.queue-card:hover { border-color: #fbbf24; }
+  .card.low-conf { border-left: 3px solid #dc2626; }
+  .card.medium-conf { border-left: 3px solid #fbbf24; }
+  .card-row { display: flex; align-items: flex-start; gap: 12px; }
+  .checkbox { width: 18px; height: 18px; border: 1.5px solid #4a5563; border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; }
+  .checkbox.checked { background: #4a9eff; border-color: #4a9eff; }
+  .checkbox.checked::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge.source-slack { background: #4a154b; color: #f0c5f0; }
+  .badge.source-gmail { background: #c5221f; color: white; }
+  .badge.source-hubspot { background: #ff7a59; color: white; }
+  .badge.source-granola { background: #6b46c1; color: white; }
+  .badge.source-nooks { background: #0f766e; color: white; }
+  .badge.priority-p1 { background: #dc2626; color: white; }
+  .badge.priority-p2 { background: #d97706; color: white; }
+  .badge.priority-p3 { background: #2563eb; color: white; }
+  .badge.priority-p4 { background: #4b5563; color: white; }
+  .badge.from-ryan { background: #1d4e89; color: #a8d5ff; }
+  .badge.from-internal { background: #065f46; color: #a7f3d0; }
+  .badge.deadline { background: transparent; border: 1px solid #d97706; color: #fbbf24; }
+  .confidence-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #8b95a3; margin-left: auto; }
+  .confidence-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .confidence-dot.high { background: #10b981; }
+  .confidence-dot.medium { background: #fbbf24; }
+  .confidence-dot.low { background: #dc2626; }
+  .task-title { font-size: 14px; font-weight: 500; color: #e8eaed; line-height: 1.4; margin-bottom: 6px; }
+  .task-context { font-size: 12px; color: #8b95a3; line-height: 1.5; background: #0f1419; padding: 8px 10px; border-radius: 4px; border-left: 2px solid #4a5563; margin: 8px 0; font-style: italic; }
+  .task-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .action-btn { background: #2a3038; border: 1px solid #3a424d; color: #e8eaed; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .action-btn:hover { background: #3a424d; }
+  .action-btn.primary { background: #1d4e89; border-color: #1d4e89; }
+  .action-btn.primary:hover { background: #2563a8; }
+  .answer-buttons { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .answer-btn { background: #2a3038; border: 1px solid #d97706; color: #fbbf24; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .answer-btn:hover { background: #d97706; color: #0f1419; }
+  .answer-btn.suggested { background: #d97706; color: #0f1419; font-weight: 600; }
+  .answer-btn.suggested:hover { background: #fbbf24; }
+  .draft-box { margin-top: 10px; background: #0f1419; border: 1px solid #2a3038; border-radius: 6px; padding: 12px; display: none; }
+  .draft-box.open { display: block; }
+  .draft-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8b95a3; margin-bottom: 6px; font-weight: 600; }
+  .draft-content { font-size: 13px; line-height: 1.6; color: #d8dde4; white-space: pre-wrap; }
+  .draft-actions { margin-top: 10px; display: flex; gap: 8px; }
+  .article-summary { margin-top: 10px; background: #0f1419; border-left: 3px solid #6b46c1; padding: 10px 12px; border-radius: 4px; }
+  .article-summary .article-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #c4b5fd; }
+  .article-summary ul { list-style: none; padding: 0; margin: 6px 0; }
+  .article-summary li { font-size: 12px; color: #b8c1cc; padding: 3px 0 3px 16px; position: relative; line-height: 1.5; }
+  .article-summary li::before { content: "→"; position: absolute; left: 0; color: #6b46c1; }
+  .article-tag { display: inline-block; font-size: 10px; background: #6b46c1; color: white; padding: 2px 7px; border-radius: 4px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .empty-state { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 13px; }
+  .signal-pill { display: inline-block; background: #2a3038; color: #fbbf24; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 4px; margin-top: 4px; }
+  .config-banner { background: #d97706; color: #0f1419; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500; }
+  .loading { text-align: center; padding: 60px 20px; color: #8b95a3; }
+  .suggested-label { font-size: 11px; color: #fbbf24; font-style: italic; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="config-warning"></div>
+  <div class="header">
+    <div>
+      <h1>BDR Task Board — Camden Riley</h1>
+      <div class="subtitle">Waystation AI · <span id="last-refresh">Loading...</span></div>
+    </div>
+    <div class="header-right">
+      <div class="stat">
+        <div><strong id="completion-stat">—</strong></div>
+        <div>tasks complete</div>
+      </div>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="all" onclick="setTab('all')">All</button>
+    <button class="tab" data-tab="queue" onclick="setTab('queue')" id="tab-queue">Needs your call <span class="count" id="count-queue">0</span></button>
+    <button class="tab" data-tab="tasks" onclick="setTab('tasks')">Tasks <span class="count" id="count-tasks">0</span></button>
+    <button class="tab" data-tab="review" onclick="setTab('review')">Review <span class="count" id="count-review">0</span></button>
+    <button class="tab" data-tab="fyi" onclick="setTab('fyi')">FYI <span class="count" id="count-fyi">0</span></button>
+  </div>
+
+  <div id="board"><div class="loading">Loading from Google Sheet...</div></div>
+</div>
+
+<script>
+// ============================================
+// CONFIG — Camden, edit these two values
+// ============================================
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm7L_7iuXDN5TvH8Ex2njYCUiJMHsTlyNcpjDjJWegrYjVeNKMJiYhoXU3BKXyOLstQw7zh2qkGQ_r/pub?gid=0&single=true&output=csv";
+const APPS_SCRIPT_WEBHOOK = "https://script.google.com/macros/s/AKfycbze_EgzBFssisDtfZox3Nwk9xJjXYkV7oUgJj4C53UhBMbZZAHmUpaQo8kOQO9HWBgi4A/exec";
+// ============================================
+
+let currentTab = "all";
+let allItems = [];
+let openDrafts = {};
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
+  render();
+}
+
+async function loadData() {
+  if (SHEET_CSV_URL.includes("PASTE")) {
+    document.getElementById("config-warning").innerHTML =
+      '<div class="config-banner">⚙ Setup required: Edit SHEET_CSV_URL at the top of dashboard.html. See setup-checklist.md.</div>';
+    document.getElementById("board").innerHTML = '<div class="empty-state">Configure your Google Sheet URL to see live data.</div>';
+    return;
+  }
+
+  document.getElementById("board").innerHTML = '<div class="loading">Loading from Google Sheet...</div>';
+  try {
+    const res = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
+    const csv = await res.text();
+    allItems = parseCSV(csv);
+    document.getElementById("last-refresh").textContent = "Refreshed " + new Date().toLocaleTimeString();
+    render();
+  } catch (err) {
+    document.getElementById("board").innerHTML = `<div class="empty-state">Could not load sheet. Error: ${err.message}</div>`;
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const values = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (values[i] || "").trim(); });
+    return obj;
+  }).filter(r => r.id);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else { current += char; }
+  }
+  result.push(current);
+  return result;
+}
+
+async function postToSheet(payload) {
+  if (APPS_SCRIPT_WEBHOOK.includes("PASTE")) {
+    console.warn("Apps Script webhook not configured");
+    return;
+  }
+  try {
+    await fetch(APPS_SCRIPT_WEBHOOK, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error("Failed to save:", err);
+  }
+}
+
+async function toggleComplete(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  const newStatus = item.status === "done" ? "new" : "done";
+  item.status = newStatus;
+  item.completed_at = newStatus === "done" ? new Date().toISOString() : "";
+  render();
+  await postToSheet({ id, status: newStatus, completed_at: item.completed_at });
+}
+
+async function answerQueue(id, decidedBucket) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  // Move from needs_call to the decided bucket — Cowork will read this and learn
+  item.bucket = decidedBucket;
+  item.confidence = "high"; // Camden answered, so it's confirmed
+  render();
+  await postToSheet({ id, bucket: decidedBucket, confidence: "high" });
+}
+
+function toggleDraft(id) {
+  openDrafts[id] = !openDrafts[id];
+  render();
+}
+
+function copyDraft(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item || !item.draft) return;
+  navigator.clipboard.writeText(item.draft);
+  const btn = document.getElementById(`copy-${id}`);
+  if (btn) { btn.textContent = "✓ Copied"; setTimeout(() => { btn.textContent = "Copy to clipboard"; }, 2000); }
+}
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderQueueCard(item) {
+  const sourceLabel = { slack: "Slack", gmail: "Gmail", hubspot: "HubSpot", granola: "Granola", nooks: "Nooks" }[item.source] || item.source;
+  const fromRyan = item.from_ryan === "true" || item.from_ryan === "TRUE";
+  const fromInternal = item.from_internal === "true" || item.from_internal === "TRUE";
+  const suggested = item.suggested_bucket || "tasks";
+
+  return `<div class="card queue-card">
+    <div class="card-row">
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="badge source-${item.source}">${sourceLabel}</span>
+          ${fromRyan ? '<span class="badge from-ryan">From Ryan</span>' : ""}
+          ${!fromRyan && fromInternal ? '<span class="badge from-internal">Internal</span>' : ""}
+          <span class="confidence-indicator"><span class="confidence-dot low"></span>Low confidence</span>
+        </div>
+        <div class="task-title">${escapeHTML(item.title)}</div>
+        <div class="task-context">${escapeHTML(item.context)}</div>
+        <div class="suggested-label">My best guess: <strong>${suggested.toUpperCase()}</strong> — but I'm not sure. What is this?</div>
+        <div class="answer-buttons">
+          <button class="answer-btn ${suggested === "tasks" ? "suggested" : ""}" onclick="answerQueue('${item.id}', 'tasks')">Task</button>
+          <button class="answer-btn ${suggested === "review" ? "suggested" : ""}" onclick="answerQueue('${item.id}', 'review')">Review</button>
+          <button class="answer-btn ${suggested === "fyi" ? "suggested" : ""}" onclick="answerQueue('${item.id}', 'fyi')">FYI</button>
+          ${item.source_url ? `<a href="${escapeHTML(item.source_url)}" target="_blank" class="action-btn">↗ See source first</a>` : ""}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCard(item, isTask) {
+  const isComplete = item.status === "done";
+  const sourceLabel = { slack: "Slack", gmail: "Gmail", hubspot: "HubSpot", granola: "Granola", nooks: "Nooks" }[item.source] || item.source;
+  const priorityLabel = { p1: "P1 — Today", p2: "P2 — This week", p3: "P3 — When you can", p4: "P4 — Backlog" }[item.priority];
+  const fromRyan = item.from_ryan === "true" || item.from_ryan === "TRUE";
+  const fromInternal = item.from_internal === "true" || item.from_internal === "TRUE";
+
+  let confidenceHTML = "";
+  let confClass = "";
+  if (item.confidence === "low") {
+    confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot low"></span>Low confidence</span>';
+    confClass = "low-conf";
+  } else if (item.confidence === "medium") {
+    confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot medium"></span>Medium confidence</span>';
+    confClass = "medium-conf";
+  }
+
+  let signalsHTML = "";
+  if (item.signals) {
+    signalsHTML = '<div>' + item.signals.split(",").map(s => `<span class="signal-pill">${escapeHTML(s.trim())}</span>`).join("") + '</div>';
+  }
+
+  let articleHTML = "";
+  if (item.article_summary_json) {
+    try {
+      const a = JSON.parse(item.article_summary_json);
+      articleHTML = `<div class="article-summary">
+        <div class="article-title">📄 ${escapeHTML(a.title || "Article")}</div>
+        <ul>${(a.bullets || []).map(b => `<li>${escapeHTML(b)}</li>`).join("")}</ul>
+        ${a.relevance ? `<div class="article-tag">Why it matters: ${escapeHTML(a.relevance)}</div>` : ""}
+      </div>`;
+    } catch (e) {}
+  }
+
+  let draftHTML = "";
+  if (item.draft) {
+    const isOpen = openDrafts[item.id];
+    draftHTML = `<div class="draft-box ${isOpen ? "open" : ""}">
+      <div class="draft-label">Auto-drafted response</div>
+      <div class="draft-content">${escapeHTML(item.draft)}</div>
+      <div class="draft-actions">
+        <button class="action-btn primary" id="copy-${item.id}" onclick="copyDraft('${item.id}')">Copy to clipboard</button>
+        ${item.source_url ? `<a href="${escapeHTML(item.source_url)}" target="_blank" class="action-btn">Open source</a>` : ""}
+      </div>
+    </div>`;
+  }
+
+  return `<div class="card ${isComplete ? "completed" : ""} ${confClass}">
+    <div class="card-row">
+      ${isTask ? `<div class="checkbox ${isComplete ? "checked" : ""}" onclick="toggleComplete('${item.id}')"></div>` : ""}
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="badge source-${item.source}">${sourceLabel}</span>
+          ${fromRyan ? '<span class="badge from-ryan">From Ryan</span>' : ""}
+          ${!fromRyan && fromInternal ? '<span class="badge from-internal">Internal</span>' : ""}
+          ${priorityLabel ? `<span class="badge priority-${item.priority}">${priorityLabel}</span>` : ""}
+          ${item.deadline ? `<span class="badge deadline">⏱ ${escapeHTML(item.deadline)}</span>` : ""}
+          ${confidenceHTML}
+        </div>
+        <div class="task-title">${escapeHTML(item.title)}</div>
+        <div class="task-context">${escapeHTML(item.context)}</div>
+        ${signalsHTML}
+        <div class="task-actions">
+          ${item.source_url ? `<a href="${escapeHTML(item.source_url)}" target="_blank" class="action-btn">↗ Open in ${sourceLabel}</a>` : ""}
+          ${item.draft ? `<button class="action-btn primary" onclick="toggleDraft('${item.id}')">${openDrafts[item.id] ? "▼ Hide draft" : "▶ View draft"}</button>` : ""}
+        </div>
+        ${draftHTML}
+        ${articleHTML}
+      </div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const queue = allItems.filter(i => i.bucket === "needs_call");
+  const rollover = allItems.filter(i => i.bucket === "rollover");
+  const tasks = allItems.filter(i => i.bucket === "tasks");
+  const review = allItems.filter(i => i.bucket === "review");
+  const fyi = allItems.filter(i => i.bucket === "fyi");
+
+  document.getElementById("count-queue").textContent = queue.length;
+  document.getElementById("count-tasks").textContent = rollover.length + tasks.length;
+  document.getElementById("count-review").textContent = review.length;
+  document.getElementById("count-fyi").textContent = fyi.length;
+
+  // Highlight the queue tab if there are items
+  const queueTab = document.getElementById("tab-queue");
+  if (queue.length > 0) queueTab.classList.add("has-queue");
+  else queueTab.classList.remove("has-queue");
+
+  const totalTasks = rollover.length + tasks.length;
+  const completed = [...rollover, ...tasks].filter(i => i.status === "done").length;
+  document.getElementById("completion-stat").textContent = `${completed}/${totalTasks}`;
+
+  let html = "";
+
+  // Queue section — show at top in "all" view, or as the only content in "queue" view
+  if (currentTab === "all" || currentTab === "queue") {
+    if (queue.length > 0) {
+      html += `<div class="section-header queue">
+        <span class="dot"></span>
+        Needs your call · ${queue.length} ${queue.length === 1 ? "item" : "items"} to classify
+        <span class="help-text">Your answers train the system — by week 3 this section should be near empty</span>
+      </div>`;
+      html += queue.map(i => renderQueueCard(i)).join("");
+    } else if (currentTab === "queue") {
+      html += '<div class="empty-state">No questions today. The system is confident in its classifications.</div>';
+    }
+  }
+
+  if (currentTab === "all" || currentTab === "tasks") {
+    if (rollover.length > 0) {
+      html += '<div class="section-header rollover"><span class="dot"></span>Rollover from yesterday</div>';
+      html += rollover.map(i => renderCard(i, true)).join("");
+    }
+    if (tasks.length > 0) {
+      html += '<div class="section-header"><span class="dot"></span>Today\'s tasks · ranked by priority</div>';
+      html += tasks.map(i => renderCard(i, true)).join("");
+    }
+    if (rollover.length === 0 && tasks.length === 0 && currentTab === "tasks") {
+      html += '<div class="empty-state">No tasks yet. Either you\'re crushing it or the 2pm pull hasn\'t run.</div>';
+    }
+  }
+  if (currentTab === "all" || currentTab === "review") {
+    if (review.length > 0) {
+      html += '<div class="section-header"><span class="dot"></span>Review · signals worth deciding on</div>';
+      html += review.map(i => renderCard(i, false)).join("");
+    } else if (currentTab === "review") {
+      html += '<div class="empty-state">No signals to review.</div>';
+    }
+  }
+  if (currentTab === "all" || currentTab === "fyi") {
+    if (fyi.length > 0) {
+      html += '<div class="section-header"><span class="dot"></span>FYI · context, no action needed</div>';
+      html += fyi.map(i => renderCard(i, false)).join("");
+    } else if (currentTab === "fyi") {
+      html += '<div class="empty-state">No FYI items today.</div>';
+    }
+  }
+
+  document.getElementById("board").innerHTML = html || '<div class="empty-state">No data yet. Run your Cowork task to populate the board.</div>';
+}
+
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
