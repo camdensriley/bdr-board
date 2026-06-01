@@ -103,6 +103,8 @@
   .proj-body { flex: 1; min-width: 0; }
   .proj-name { font-size: 13px; font-weight: 500; color: #e8eaed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .proj-time { font-size: 11px; color: #8b95a3; margin-top: 2px; }
+  .project-card.is-complete { opacity: 0.5; }
+  .project-card.is-complete .proj-name { font-size: 12px; font-weight: 400; }
   .add-project-btn { width: 100%; background: #2a3038; border: 1px dashed #3a424d; color: #8b95a3; padding: 9px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
   .add-project-btn:hover { background: #3a424d; color: #e8eaed; }
   /* ===== Project modal ===== */
@@ -117,8 +119,6 @@
   .field textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; }
   .modal-actions .spacer { flex: 1; }
-  .btn-delete { background: none; border: none; color: #dc2626; font-size: 12px; cursor: pointer; padding: 6px 4px; }
-  .btn-delete:hover { text-decoration: underline; }
   @media (max-width: 768px) {
     .layout { flex-direction: column; }
     .sidebar { width: 100%; position: static; top: auto; }
@@ -181,7 +181,6 @@
       <textarea id="proj-notes-input" placeholder="Tasks, reminders, context…"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn-delete" id="proj-delete-btn" onclick="deleteProject()">Delete</button>
       <div class="spacer"></div>
       <button class="action-btn" onclick="closeProjectModal()">Cancel</button>
       <button class="refresh-btn" onclick="saveProject()">Save</button>
@@ -356,12 +355,13 @@ function renderProjects() {
     return;
   }
   const order = { priority: 0, active: 1, standby: 2, complete: 3 };
-  const sorted = [...projects].sort((a, b) =>
-    (order[(a.status || "").toLowerCase()] ?? 9) - (order[(b.status || "").toLowerCase()] ?? 9));
+  const rank = s => order[(s || "").toLowerCase()] ?? 9;
+  const ts = p => { const t = new Date(p.last_updated).getTime(); return isNaN(t) ? 0 : t; };
+  const sorted = [...projects].sort((a, b) => rank(a.status) - rank(b.status) || ts(b) - ts(a));
   list.innerHTML = sorted.map(p => {
     const status = (p.status || "").toLowerCase();
     const rel = relativeTime(p.last_updated);
-    return `<div class="project-card" onclick="openProjectModal('${p.id}')">
+    return `<div class="project-card ${status === "complete" ? "is-complete" : ""}" onclick="openProjectModal('${p.id}')">
       <span class="proj-dot ${status}"></span>
       <div class="proj-body">
         <div class="proj-name">${escapeHTML(p.name)}</div>
@@ -379,7 +379,6 @@ function openProjectModal(id) {
   document.getElementById("proj-name-input").value = p.name || "";
   document.getElementById("proj-status-input").value = (p.status || "active").toLowerCase();
   document.getElementById("proj-notes-input").value = p.notes || "";
-  document.getElementById("proj-delete-btn").style.display = "";
   document.getElementById("project-modal").classList.add("open");
 }
 
@@ -389,7 +388,6 @@ function openNewProjectModal() {
   document.getElementById("proj-name-input").value = "";
   document.getElementById("proj-status-input").value = "active";
   document.getElementById("proj-notes-input").value = "";
-  document.getElementById("proj-delete-btn").style.display = "none";
   document.getElementById("project-modal").classList.add("open");
 }
 
@@ -415,20 +413,9 @@ async function saveProject() {
     const row = { id, name, status, notes, last_updated: now, created_date: now };
     projects.push(row);
     renderProjects();
-    await postToSheet({ action: "insert", target: "projects", id, name, status, notes, last_updated: now, created_date: now });
+    await postToSheet({ action: "insert", target: "projects", row });
   }
   closeProjectModal();
-}
-
-async function deleteProject() {
-  if (!editingProjectId) return;
-  const p = projects.find(x => x.id === editingProjectId);
-  if (!confirm(`Delete project "${p ? p.name : ""}"? This cannot be undone.`)) return;
-  const id = editingProjectId;
-  projects = projects.filter(x => x.id !== id);
-  renderProjects();
-  closeProjectModal();
-  await postToSheet({ action: "delete", target: "projects", id });
 }
 
 function renderQueueCard(item) {
