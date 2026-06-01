@@ -7,7 +7,8 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1419; color: #e8eaed; padding: 24px; min-height: 100vh; }
-  .container { max-width: 1200px; margin: 0 auto; }
+  .layout { display: flex; gap: 24px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .container { flex: 1; min-width: 0; }
   .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2a3038; }
   .header h1 { font-size: 24px; font-weight: 600; }
   .subtitle { font-size: 13px; color: #8b95a3; margin-top: 4px; }
@@ -88,10 +89,50 @@
   .config-banner { background: #d97706; color: #0f1419; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500; }
   .loading { text-align: center; padding: 60px 20px; color: #8b95a3; }
   .suggested-label { font-size: 11px; color: #fbbf24; font-style: italic; margin-bottom: 6px; }
+  /* ===== Projects sidebar ===== */
+  .sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 24px; }
+  .sidebar .section-header { margin-top: 0; }
+  .projects-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .project-card { background: #1a1f26; border: 1px solid #2a3038; border-radius: 8px; padding: 10px 12px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+  .project-card:hover { border-color: #3a424d; }
+  .proj-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; background: #6b7280; }
+  .proj-dot.active { background: #10b981; }
+  .proj-dot.standby { background: #fbbf24; }
+  .proj-dot.priority { background: #f97316; }
+  .proj-dot.complete { background: #6b7280; }
+  .proj-body { flex: 1; min-width: 0; }
+  .proj-name { font-size: 13px; font-weight: 500; color: #e8eaed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj-time { font-size: 11px; color: #8b95a3; margin-top: 2px; }
+  .add-project-btn { width: 100%; background: #2a3038; border: 1px dashed #3a424d; color: #8b95a3; padding: 9px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
+  .add-project-btn:hover { background: #3a424d; color: #e8eaed; }
+  /* ===== Project modal ===== */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #1a1f26; border: 1px solid #2a3038; border-radius: 10px; padding: 22px; width: 100%; max-width: 440px; }
+  .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8b95a3; margin-bottom: 6px; font-weight: 600; }
+  .field input, .field select, .field textarea { width: 100%; background: #0f1419; border: 1px solid #2a3038; color: #e8eaed; padding: 9px 10px; border-radius: 6px; font-size: 13px; font-family: inherit; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #4a9eff; }
+  .field textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+  .modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; }
+  .modal-actions .spacer { flex: 1; }
+  .btn-delete { background: none; border: none; color: #dc2626; font-size: 12px; cursor: pointer; padding: 6px 4px; }
+  .btn-delete:hover { text-decoration: underline; }
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; position: static; top: auto; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="layout">
+  <aside class="sidebar">
+    <div class="section-header">Projects</div>
+    <div class="projects-list" id="projects-list"></div>
+    <button class="add-project-btn" onclick="openNewProjectModal()">+ Add Project</button>
+  </aside>
+  <div class="container">
   <div id="config-warning"></div>
   <div class="header">
     <div>
@@ -116,6 +157,36 @@
   </div>
 
   <div id="board"><div class="loading">Loading from Google Sheet...</div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="project-modal" onclick="if(event.target===this)closeProjectModal()">
+  <div class="modal">
+    <h2 id="modal-title">Edit Project</h2>
+    <div class="field">
+      <label for="proj-name-input">Project name</label>
+      <input type="text" id="proj-name-input" placeholder="Project name">
+    </div>
+    <div class="field">
+      <label for="proj-status-input">Status</label>
+      <select id="proj-status-input">
+        <option value="active">Active</option>
+        <option value="standby">Standby</option>
+        <option value="priority">Priority this week</option>
+        <option value="complete">Complete</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="proj-notes-input">Notes</label>
+      <textarea id="proj-notes-input" placeholder="Tasks, reminders, context…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="proj-delete-btn" onclick="deleteProject()">Delete</button>
+      <div class="spacer"></div>
+      <button class="action-btn" onclick="closeProjectModal()">Cancel</button>
+      <button class="refresh-btn" onclick="saveProject()">Save</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -124,11 +195,14 @@
 // ============================================
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm7L_7iuXDN5TvH8Ex2njYCUiJMHsTlyNcpjDjJWegrYjVeNKMJiYhoXU3BKXyOLstQw7zh2qkGQ_r/pub?gid=0&single=true&output=csv";
 const APPS_SCRIPT_WEBHOOK = "https://script.google.com/macros/s/AKfycbze_EgzBFssisDtfZox3Nwk9xJjXYkV7oUgJj4C53UhBMbZZAHmUpaQo8kOQO9HWBgi4A/exec";
+const PROJECTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm7L_7iuXDN5TvH8Ex2njYCUiJMHsTlyNcpjDjJWegrYjVeNKMJiYhoXU3BKXyOLstQw7zh2qkGQ_r/pub?gid=892315479&single=true&output=csv";
 // ============================================
 
 let currentTab = "all";
 let allItems = [];
 let openDrafts = {};
+let projects = [];
+let editingProjectId = null;
 
 function setTab(tab) {
   currentTab = tab;
@@ -155,6 +229,7 @@ async function loadData() {
   } catch (err) {
     document.getElementById("board").innerHTML = `<div class="empty-state">Could not load sheet. Error: ${err.message}</div>`;
   }
+  loadProjects();
 }
 
 function parseCSV(text) {
@@ -240,6 +315,120 @@ function copyDraft(id) {
 function escapeHTML(str) {
   if (!str) return "";
   return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// ============================================
+// Projects sidebar
+// ============================================
+async function loadProjects() {
+  if (PROJECTS_CSV_URL.includes("PASTE")) return;
+  try {
+    const res = await fetch(PROJECTS_CSV_URL + "&t=" + Date.now());
+    const csv = await res.text();
+    projects = parseCSV(csv);
+    renderProjects();
+  } catch (err) {
+    console.error("Failed to load projects:", err);
+  }
+}
+
+function relativeTime(iso) {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return "";
+  const diff = Date.now() - then;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return min + "m ago";
+  const hr = Math.round(min / 60);
+  if (hr < 24) return hr + "h ago";
+  const day = Math.round(hr / 24);
+  if (day < 30) return day + "d ago";
+  const mo = Math.round(day / 30);
+  return mo + "mo ago";
+}
+
+function renderProjects() {
+  const list = document.getElementById("projects-list");
+  if (!list) return;
+  if (projects.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:16px 4px;text-align:left;">No projects yet.</div>';
+    return;
+  }
+  const order = { priority: 0, active: 1, standby: 2, complete: 3 };
+  const sorted = [...projects].sort((a, b) =>
+    (order[(a.status || "").toLowerCase()] ?? 9) - (order[(b.status || "").toLowerCase()] ?? 9));
+  list.innerHTML = sorted.map(p => {
+    const status = (p.status || "").toLowerCase();
+    const rel = relativeTime(p.last_updated);
+    return `<div class="project-card" onclick="openProjectModal('${p.id}')">
+      <span class="proj-dot ${status}"></span>
+      <div class="proj-body">
+        <div class="proj-name">${escapeHTML(p.name)}</div>
+        ${rel ? `<div class="proj-time">Updated ${rel}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openProjectModal(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  editingProjectId = id;
+  document.getElementById("modal-title").textContent = "Edit Project";
+  document.getElementById("proj-name-input").value = p.name || "";
+  document.getElementById("proj-status-input").value = (p.status || "active").toLowerCase();
+  document.getElementById("proj-notes-input").value = p.notes || "";
+  document.getElementById("proj-delete-btn").style.display = "";
+  document.getElementById("project-modal").classList.add("open");
+}
+
+function openNewProjectModal() {
+  editingProjectId = null;
+  document.getElementById("modal-title").textContent = "Add Project";
+  document.getElementById("proj-name-input").value = "";
+  document.getElementById("proj-status-input").value = "active";
+  document.getElementById("proj-notes-input").value = "";
+  document.getElementById("proj-delete-btn").style.display = "none";
+  document.getElementById("project-modal").classList.add("open");
+}
+
+function closeProjectModal() {
+  document.getElementById("project-modal").classList.remove("open");
+  editingProjectId = null;
+}
+
+async function saveProject() {
+  const name = document.getElementById("proj-name-input").value.trim();
+  const status = document.getElementById("proj-status-input").value;
+  const notes = document.getElementById("proj-notes-input").value;
+  if (!name) { alert("Project name is required."); return; }
+  const now = new Date().toISOString();
+
+  if (editingProjectId) {
+    const p = projects.find(x => x.id === editingProjectId);
+    if (p) { p.name = name; p.status = status; p.notes = notes; p.last_updated = now; }
+    renderProjects();
+    await postToSheet({ target: "projects", id: editingProjectId, name, status, notes, last_updated: now });
+  } else {
+    const id = crypto.randomUUID();
+    const row = { id, name, status, notes, last_updated: now, created_date: now };
+    projects.push(row);
+    renderProjects();
+    await postToSheet({ action: "insert", target: "projects", id, name, status, notes, last_updated: now, created_date: now });
+  }
+  closeProjectModal();
+}
+
+async function deleteProject() {
+  if (!editingProjectId) return;
+  const p = projects.find(x => x.id === editingProjectId);
+  if (!confirm(`Delete project "${p ? p.name : ""}"? This cannot be undone.`)) return;
+  const id = editingProjectId;
+  projects = projects.filter(x => x.id !== id);
+  renderProjects();
+  closeProjectModal();
+  await postToSheet({ action: "delete", target: "projects", id });
 }
 
 function renderQueueCard(item) {
