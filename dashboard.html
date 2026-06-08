@@ -106,49 +106,129 @@
   .config-banner { background: #d97706; color: #0f1419; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500; }
   .loading { text-align: center; padding: 60px 20px; color: #8b95a3; }
   .suggested-label { font-size: 11px; color: #fbbf24; font-style: italic; margin-bottom: 6px; }
+
+  /* Projects sidebar */
+  .layout { display: flex; gap: 24px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+  .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 24px; }
+  .sidebar-header { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #6b7280; font-weight: 600; padding: 0 4px 12px; }
+  .project-card { background: #1a1f26; border: 1px solid #2a3038; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; position: relative; transition: border-color 0.15s; }
+  .project-card:hover { border-color: #3a424d; }
+  .project-card.complete { opacity: 0.55; }
+  .project-card.editing { border-color: #4a9eff; }
+  .project-card .pname { font-size: 13px; font-weight: 500; color: #e8eaed; padding-left: 16px; position: relative; }
+  .project-card .pname::before { content: ""; position: absolute; left: 0; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: #6b7280; }
+  .project-card.priority .pname::before { background: #f97316; }
+  .project-card.active .pname::before { background: #10b981; }
+  .project-card.standby .pname::before { background: #fbbf24; }
+  .project-card.complete .pname::before { background: #6b7280; }
+  .project-card .pmeta { font-size: 11px; color: #6b7280; margin-top: 4px; padding-left: 16px; }
+  .project-card .pdel { position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: #6b7280; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; opacity: 0; line-height: 1; }
+  .project-card:hover .pdel { opacity: 1; }
+  .project-card .pdel:hover { color: #dc2626; background: #2a3038; }
+  .project-edit { margin-top: 8px; padding: 10px; background: #0f1419; border: 1px solid #2a3038; border-radius: 6px; }
+  .project-edit input, .project-edit textarea, .project-edit select { width: 100%; background: #1a1f26; border: 1px solid #2a3038; color: #e8eaed; padding: 6px 8px; border-radius: 4px; font-size: 12px; font-family: inherit; margin-bottom: 8px; }
+  .project-edit textarea { resize: vertical; min-height: 60px; }
+  .project-edit .pe-row { display: flex; gap: 6px; margin-top: 4px; }
+  .project-edit button { flex: 1; background: #2a3038; border: 1px solid #3a424d; color: #e8eaed; padding: 6px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+  .project-edit button.primary { background: #1d4e89; border-color: #1d4e89; }
+  .project-edit button.primary:hover { background: #2563a8; }
+  .project-edit button:hover { background: #3a424d; }
+  .add-project-btn { width: 100%; background: #2a3038; border: 1px dashed #3a424d; color: #8b95a3; padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-top: 4px; }
+  .add-project-btn:hover { color: #e8eaed; border-color: #4a5563; }
+
+  /* Archive view */
+  .archive-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .archive-filter { background: #1a1f26; border: 1px solid #2a3038; color: #8b95a3; padding: 5px 12px; border-radius: 14px; font-size: 12px; cursor: pointer; }
+  .archive-filter:hover { color: #e8eaed; border-color: #3a424d; }
+  .archive-filter.active { background: #1d4e89; border-color: #1d4e89; color: white; }
+  .archive-summary { display: flex; gap: 24px; font-size: 12px; color: #8b95a3; margin-bottom: 16px; padding: 10px 14px; background: #1a1f26; border: 1px solid #2a3038; border-radius: 8px; }
+  .archive-summary strong { color: #e8eaed; font-size: 16px; display: block; margin-bottom: 2px; }
+  .archive-summary .stat-block { flex: 1; }
+  .archive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 1100px) { .archive-grid { grid-template-columns: 1fr; } }
+  .archive-col-header { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8b95a3; font-weight: 600; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #2a3038; display: flex; justify-content: space-between; align-items: center; }
+  .archive-col-header.completed { color: #10b981; }
+  .archive-col-header.dismissed { color: #6b7280; }
+  .archive-card { background: #1a1f26; border: 1px solid #2a3038; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+  .archive-card .ac-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; font-size: 10px; }
+  .archive-card .ac-title { font-size: 13px; color: #e8eaed; margin-bottom: 4px; line-height: 1.3; }
+  .archive-card .ac-time { font-size: 11px; color: #6b7280; }
+  .archive-card .ac-actions { margin-top: 6px; }
+  .archive-card .ac-restore { background: transparent; border: 1px solid #3a424d; color: #8b95a3; padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+  .archive-card .ac-restore:hover { color: #e8eaed; border-color: #4a5563; }
+  .badge.bucket-tasks { background: #1d4e89; color: #a8d5ff; }
+  .badge.bucket-rollover { background: #92400e; color: #fde68a; }
+  .badge.bucket-review { background: #5b21b6; color: #ddd6fe; }
+  .badge.bucket-fyi { background: #374151; color: #d1d5db; }
+  .badge.bucket-project { background: #064e3b; color: #a7f3d0; }
+  .main { flex: 1; min-width: 0; }
+ @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; position: static; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <div id="config-warning"></div>
-  <div class="header">
-    <div>
-      <h1>BDR Task Board — Camden Riley</h1>
-      <div class="subtitle">Waystation AI · <span id="last-refresh">Loading...</span></div>
-    </div>
-    <div class="header-right">
-      <div class="stat">
-        <div><strong id="completion-stat">—</strong></div>
-        <div>tasks complete</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">Projects</div>
+    <div id="projects-list"><div class="loading" style="padding:20px 0;font-size:12px;">Loading…</div></div>
+    <button class="add-project-btn" onclick="startAddProject()">+ Add Project</button>
+  </aside>
+  <main class="main">
+    <div id="config-warning"></div>
+    <div class="header">
+      <div>
+        <h1>BDR Task Board — Camden Riley</h1>
+        <div class="subtitle">Waystation AI · <span id="last-refresh">Loading...</span></div>
       </div>
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <div class="header-right">
+        <div class="stat">
+          <div><strong id="completion-stat">—</strong></div>
+          <div>tasks complete</div>
+        </div>
+        <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      </div>
     </div>
-  </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="all" onclick="setTab('all')">All</button>
-    <button class="tab" data-tab="queue" onclick="setTab('queue')" id="tab-queue">Needs your call <span class="count" id="count-queue">0</span></button>
-    <button class="tab" data-tab="tasks" onclick="setTab('tasks')">Tasks <span class="count" id="count-tasks">0</span></button>
-    <button class="tab" data-tab="review" onclick="setTab('review')">Review <span class="count" id="count-review">0</span></button>
-    <button class="tab" data-tab="fyi" onclick="setTab('fyi')">FYI <span class="count" id="count-fyi">0</span></button>
-  </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="all" onclick="setTab('all')">All</button>
+      <button class="tab" data-tab="queue" onclick="setTab('queue')" id="tab-queue">Needs your call <span class="count" id="count-queue">0</span></button>
+      <button class="tab" data-tab="tasks" onclick="setTab('tasks')">Tasks <span class="count" id="count-tasks">0</span></button>
+      <button class="tab" data-tab="review" onclick="setTab('review')">Review <span class="count" id="count-review">0</span></button>
+      <button class="tab" data-tab="fyi" onclick="setTab('fyi')">FYI <span class="count" id="count-fyi">0</span></button>
+      <button class="tab" data-tab="archive" onclick="setTab('archive')">Archive <span class="count" id="count-archive">0</span></button>
+    </div>
 
-  <div id="board"><div class="loading">Loading from Google Sheet...</div></div>
+    <div id="board"><div class="loading">Loading from Google Sheet...</div></div>
+  </main>
 </div>
 
 <script>
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm7L_7iuXDN5TvH8Ex2njYCUiJMHsTlyNcpjDjJWegrYjVeNKMJiYhoXU3BKXyOLstQw7zh2qkGQ_r/pub?gid=0&single=true&output=csv";
+const PROJECTS_CSV_URL = "https://docs.google.com/spreadsheets/d/1UlMIporrKLm7cVURyigPtSfDayXYUD6dzkgdYPyc9lQ/export?format=csv&gid=892315479";
 const APPS_SCRIPT_WEBHOOK = "https://script.google.com/macros/s/AKfycbze_EgzBFssisDtfZox3Nwk9xJjXYkV7oUgJj4C53UhBMbZZAHmUpaQo8kOQO9HWBgi4A/exec";
 
 let currentTab = "all";
 let allItems = [];
+let allProjects = [];
 let openDrafts = {};
+let editingProjectId = null;
 let showHidden = { tasks: false, review: false, fyi: false };
+let archiveFilter = "month";
 
-function toggleHidden(section) {
-  showHidden[section] = !showHidden[section];
-  render();
+function setArchiveFilter(f) { archiveFilter = f; render(); }
+
+function withinArchiveWindow(iso) {
+  if (archiveFilter === "all") return true;
+  if (!iso) return false;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return false;
+  const ms = archiveFilter === "week" ? 7 * 86400000 : 30 * 86400000;
+  return (Date.now() - t) <= ms;
 }
+
+function toggleHidden(section) { showHidden[section] = !showHidden[section]; render(); }
 
 function setTab(tab) {
   currentTab = tab;
@@ -158,23 +238,119 @@ function setTab(tab) {
 }
 
 async function loadData() {
-  if (SHEET_CSV_URL.includes("PASTE")) {
-    document.getElementById("config-warning").innerHTML =
-      '<div class="config-banner">⚙ Setup required: Edit SHEET_CSV_URL at the top of dashboard.html.</div>';
-    document.getElementById("board").innerHTML = '<div class="empty-state">Configure your Google Sheet URL to see live data.</div>';
-    return;
-  }
-
   document.getElementById("board").innerHTML = '<div class="loading">Loading from Google Sheet...</div>';
   try {
-    const res = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
-    const csv = await res.text();
+    const [tasksRes, projectsRes] = await Promise.all([
+      fetch(SHEET_CSV_URL + "&t=" + Date.now()),
+      fetch(PROJECTS_CSV_URL + "&t=" + Date.now())
+    ]);
+    const csv = await tasksRes.text();
     allItems = parseCSV(csv);
+    if (projectsRes.ok) {
+      const pcsv = await projectsRes.text();
+      allProjects = parseCSV(pcsv);
+    }
     document.getElementById("last-refresh").textContent = "Refreshed " + new Date().toLocaleTimeString();
     render();
+    renderProjects();
   } catch (err) {
     document.getElementById("board").innerHTML = `<div class="empty-state">Could not load sheet. Error: ${err.message}</div>`;
   }
+}
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return "";
+  const days = Math.floor((Date.now() - then) / 86400000);
+  if (days < 1) return "Updated today";
+  if (days === 1) return "Updated 1d ago";
+  return `Updated ${days}d ago`;
+}
+
+function renderProjects() {
+  const list = document.getElementById("projects-list");
+  if (!list) return;
+  const visible = allProjects.filter(p => p.status !== "deleted");
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px 0;font-size:12px;">No projects yet.</div>';
+    return;
+  }
+  const order = { priority: 0, active: 1, standby: 2, complete: 3 };
+  const sorted = [...visible].sort((a, b) => (order[a.status] ?? 99) - (order[b.status] ?? 99));
+  list.innerHTML = sorted.map(p => {
+    const status = (p.status || "active").toLowerCase();
+    const isEditing = editingProjectId === p.id;
+    if (isEditing) {
+      return `<div class="project-card ${status} editing">
+        <div class="project-edit">
+          <input type="text" id="pe-name-${p.id}" value="${escapeHTML(p.name || "")}" placeholder="Project name" />
+          <select id="pe-status-${p.id}">
+            <option value="priority" ${status === "priority" ? "selected" : ""}>Priority</option>
+            <option value="active" ${status === "active" ? "selected" : ""}>Active</option>
+            <option value="standby" ${status === "standby" ? "selected" : ""}>Standby</option>
+            <option value="complete" ${status === "complete" ? "selected" : ""}>Complete</option>
+          </select>
+          <textarea id="pe-notes-${p.id}" placeholder="Notes">${escapeHTML(p.notes || "")}</textarea>
+          <div class="pe-row">
+            <button class="primary" onclick="saveProject('${p.id}')">Save</button>
+            <button onclick="cancelEditProject()">Cancel</button>
+            <button onclick="deleteProject('${p.id}')" style="color:#dc2626">Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="project-card ${status}" onclick="startEditProject('${p.id}')">
+      <button class="pdel" title="Delete" onclick="event.stopPropagation();deleteProject('${p.id}')">×</button>
+      <div class="pname">${escapeHTML(p.name || "(untitled)")}</div>
+      <div class="pmeta">${escapeHTML(timeAgo(p.last_updated))}</div>
+    </div>`;
+  }).join("");
+}
+
+function startEditProject(id) {
+  editingProjectId = id;
+  renderProjects();
+  setTimeout(() => { const input = document.getElementById(`pe-name-${id}`); if (input) input.focus(); }, 50);
+}
+
+function cancelEditProject() { editingProjectId = null; renderProjects(); }
+
+async function saveProject(id) {
+  const name = document.getElementById(`pe-name-${id}`).value.trim();
+  const status = document.getElementById(`pe-status-${id}`).value;
+  const notes = document.getElementById(`pe-notes-${id}`).value.trim();
+  const p = allProjects.find(x => x.id === id);
+  if (!p) return;
+  const now = new Date().toISOString();
+  p.name = name; p.status = status; p.notes = notes; p.last_updated = now;
+  editingProjectId = null;
+  renderProjects();
+  await postToSheet({ id, target: "projects", name, status, notes, last_updated: now });
+}
+
+async function deleteProject(id) {
+  if (!confirm("Delete this project?")) return;
+  allProjects = allProjects.filter(p => p.id !== id);
+  editingProjectId = null;
+  renderProjects();
+  await postToSheet({ id, target: "projects", status: "deleted" });
+}
+
+function startAddProject() {
+  const name = prompt("New project name:");
+  if (!name || !name.trim()) return;
+  const newProject = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    status: "active",
+    notes: "",
+    last_updated: new Date().toISOString(),
+    created_date: new Date().toISOString()
+  };
+  allProjects.push(newProject);
+  renderProjects();
+  postToSheet({ action: "insert", target: "projects", row: newProject });
 }
 
 function parseCSV(text) {
@@ -198,30 +374,21 @@ function parseCSVLine(line) {
     if (char === '"') {
       if (inQuotes && line[i+1] === '"') { current += '"'; i++; }
       else { inQuotes = !inQuotes; }
-    } else if (char === "," && !inQuotes) {
-      result.push(current);
-      current = "";
-    } else { current += char; }
+    } else if (char === "," && !inQuotes) { result.push(current); current = ""; }
+    else { current += char; }
   }
   result.push(current);
   return result;
 }
 
 async function postToSheet(payload) {
-  if (APPS_SCRIPT_WEBHOOK.includes("PASTE")) {
-    console.warn("Apps Script webhook not configured");
-    return;
-  }
   try {
     await fetch(APPS_SCRIPT_WEBHOOK, {
-      method: "POST",
-      mode: "no-cors",
+      method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-  } catch (err) {
-    console.error("Failed to save:", err);
-  }
+  } catch (err) { console.error("Failed to save:", err); }
 }
 
 async function toggleComplete(id) {
@@ -261,10 +428,7 @@ async function answerQueue(id, decidedBucket) {
   await postToSheet({ id, bucket: decidedBucket, confidence: "high" });
 }
 
-function toggleDraft(id) {
-  openDrafts[id] = !openDrafts[id];
-  render();
-}
+function toggleDraft(id) { openDrafts[id] = !openDrafts[id]; render(); }
 
 function copyDraft(id) {
   const item = allItems.find(i => i.id === id);
@@ -284,7 +448,6 @@ function renderQueueCard(item) {
   const fromRyan = item.from_ryan === "true" || item.from_ryan === "TRUE";
   const fromInternal = item.from_internal === "true" || item.from_internal === "TRUE";
   const suggested = item.suggested_bucket || "tasks";
-
   return `<div class="card queue-card">
     <div class="card-row">
       <div class="card-body">
@@ -318,20 +481,12 @@ function renderCard(item, isTask) {
   const fromInternal = item.from_internal === "true" || item.from_internal === "TRUE";
   const bucketAttr = item.bucket || (isTask ? "tasks" : "review");
 
-  let confidenceHTML = "";
-  let confClass = "";
-  if (item.confidence === "low") {
-    confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot low"></span>Low confidence</span>';
-    confClass = "low-conf";
-  } else if (item.confidence === "medium") {
-    confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot medium"></span>Medium confidence</span>';
-    confClass = "medium-conf";
-  }
+  let confidenceHTML = ""; let confClass = "";
+  if (item.confidence === "low") { confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot low"></span>Low confidence</span>'; confClass = "low-conf"; }
+  else if (item.confidence === "medium") { confidenceHTML = '<span class="confidence-indicator"><span class="confidence-dot medium"></span>Medium confidence</span>'; confClass = "medium-conf"; }
 
   let signalsHTML = "";
-  if (item.signals) {
-    signalsHTML = '<div>' + item.signals.split(",").map(s => `<span class="signal-pill">${escapeHTML(s.trim())}</span>`).join("") + '</div>';
-  }
+  if (item.signals) signalsHTML = '<div>' + item.signals.split(",").map(s => `<span class="signal-pill">${escapeHTML(s.trim())}</span>`).join("") + '</div>';
 
   let articleHTML = "";
   if (item.article_summary_json) {
@@ -361,7 +516,7 @@ function renderCard(item, isTask) {
   return `<div class="card ${isComplete ? "completed" : ""} ${isDismissed ? "dismissed" : ""} ${confClass}" data-bucket="${bucketAttr}">
     <button class="dismiss-btn" title="Dismiss — no longer relevant" onclick="dismissItem('${item.id}')">×</button>
     <div class="card-row">
-      ${isTask ? `<div class="checkbox ${isComplete ? "checked" : ""}" onclick="toggleComplete('${item.id}')"></div>` : ""}
+      <div class="checkbox ${isComplete ? "checked" : ""}" title="Mark complete" onclick="toggleComplete('${item.id}')"></div>
       <div class="card-body">
         <div class="card-meta">
           <span class="badge source-${item.source}">${sourceLabel}</span>
@@ -388,6 +543,73 @@ function renderCard(item, isTask) {
 
 function isHiddenItem(i) { return i.status === "done" || i.status === "dismissed"; }
 
+function renderArchiveCard(item, kind) {
+  const isProject = kind === "project";
+  const sourceLabel = isProject ? "PROJECT" :
+    ({ slack: "Slack", gmail: "Gmail", hubspot: "HubSpot", granola: "Granola", nooks: "Nooks" }[item.source] || item.source || "");
+  const bucket = isProject ? "project" : (item.bucket || "tasks");
+  const bucketLabel = bucket.charAt(0).toUpperCase() + bucket.slice(1);
+  const when = item.completed_at || item.last_updated || "";
+  const whenLabel = when ? timeAgo(when).replace("Updated ", "") : "";
+  const title = isProject ? item.name : item.title;
+  return `<div class="archive-card">
+    <div class="ac-meta">
+      ${!isProject ? `<span class="badge source-${item.source}">${sourceLabel}</span>` : ""}
+      <span class="badge bucket-${bucket}">${bucketLabel}</span>
+    </div>
+    <div class="ac-title">${escapeHTML(title || "(untitled)")}</div>
+    <div class="ac-time">${escapeHTML(whenLabel)}</div>
+    <div class="ac-actions">
+      <button class="ac-restore" onclick="${isProject ? `restoreProject('${item.id}')` : `restoreItem('${item.id}')`}">↺ Restore</button>
+    </div>
+  </div>`;
+}
+
+async function restoreProject(id) {
+  const p = allProjects.find(x => x.id === id);
+  if (!p) return;
+  p.status = "active";
+  p.last_updated = new Date().toISOString();
+  renderProjects();
+  render();
+  await postToSheet({ id, target: "projects", status: "active", last_updated: p.last_updated });
+}
+
+function renderArchive() {
+  const taskItems = allItems.filter(i => i.bucket !== "needs_call" && isHiddenItem(i) && withinArchiveWindow(i.completed_at));
+  const completedTasks = taskItems.filter(i => i.status === "done");
+  const dismissedTasks = taskItems.filter(i => i.status === "dismissed");
+  const completedProjects = allProjects.filter(p => p.status === "complete" && withinArchiveWindow(p.last_updated));
+  const totalCompleted = completedTasks.length + completedProjects.length;
+  const totalDismissed = dismissedTasks.length;
+  const total = totalCompleted + totalDismissed;
+  const dismissRate = total > 0 ? Math.round((totalDismissed / total) * 100) : 0;
+  const windowLabel = archiveFilter === "all" ? "all time" : archiveFilter === "week" ? "the last 7 days" : "the last 30 days";
+  return `<div class="archive-filters">
+    <button class="archive-filter ${archiveFilter === "week" ? "active" : ""}" onclick="setArchiveFilter('week')">This week</button>
+    <button class="archive-filter ${archiveFilter === "month" ? "active" : ""}" onclick="setArchiveFilter('month')">This month</button>
+    <button class="archive-filter ${archiveFilter === "all" ? "active" : ""}" onclick="setArchiveFilter('all')">All time</button>
+  </div>
+  <div class="archive-summary">
+    <div class="stat-block"><strong>${totalCompleted}</strong>Completed in ${windowLabel}</div>
+    <div class="stat-block"><strong>${totalDismissed}</strong>Dismissed in ${windowLabel}</div>
+    <div class="stat-block"><strong>${dismissRate}%</strong>Dismissal rate ${dismissRate > 20 ? "(briefing may be noisy)" : "(well-calibrated)"}</div>
+  </div>
+  <div class="archive-grid">
+    <div>
+      <div class="archive-col-header completed">Completed <span>${totalCompleted}</span></div>
+      ${totalCompleted === 0 ? '<div class="empty-state" style="padding:20px;">Nothing completed in this window.</div>' : ""}
+      ${completedTasks.map(i => renderArchiveCard(i, "task")).join("")}
+      ${completedProjects.map(p => renderArchiveCard(p, "project")).join("")}
+    </div>
+    <div>
+      <div class="archive-col-header dismissed">Dismissed <span>${totalDismissed}</span></div>
+      ${totalDismissed === 0 ? '<div class="empty-state" style="padding:20px;">Nothing dismissed in this window.</div>' : ""}
+      ${dismissedTasks.map(i => renderArchiveCard(i, "task")).join("")}
+    </div>
+  </div>`;
+}
+
 function hiddenChip(section, count) {
   if (count === 0) return "";
   const active = showHidden[section];
@@ -405,6 +627,10 @@ function render() {
   document.getElementById("count-tasks").textContent = (rollover.filter(i => !isHiddenItem(i)).length) + (tasks.filter(i => !isHiddenItem(i)).length);
   document.getElementById("count-review").textContent = review.filter(i => !isHiddenItem(i)).length;
   document.getElementById("count-fyi").textContent = fyi.filter(i => !isHiddenItem(i)).length;
+  const archiveCount = allItems.filter(i => i.bucket !== "needs_call" && isHiddenItem(i) && withinArchiveWindow(i.completed_at)).length
+    + allProjects.filter(p => p.status === "complete" && withinArchiveWindow(p.last_updated)).length;
+  const countArchiveEl = document.getElementById("count-archive");
+  if (countArchiveEl) countArchiveEl.textContent = archiveCount;
 
   document.body.classList.toggle("show-hidden-tasks", showHidden.tasks);
   document.body.classList.toggle("show-hidden-review", showHidden.review);
@@ -468,6 +694,9 @@ function render() {
     } else if (currentTab === "fyi") {
       html += '<div class="empty-state">No FYI items today.</div>';
     }
+  }
+  if (currentTab === "archive") {
+    html = renderArchive();
   }
 
   document.getElementById("board").innerHTML = html || '<div class="empty-state">No data yet. Run your Cowork task to populate the board.</div>';
