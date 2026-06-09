@@ -40,6 +40,8 @@
   body.show-hidden-review .card.dismissed[data-bucket="review"] { display: block; opacity: 0.45; }
   body.show-hidden-fyi .card.completed[data-bucket="fyi"],
   body.show-hidden-fyi .card.dismissed[data-bucket="fyi"] { display: block; opacity: 0.45; }
+  body.show-hidden-custom .card.completed[data-bucket="custom"],
+  body.show-hidden-custom .card.dismissed[data-bucket="custom"] { display: block; opacity: 0.45; }
   .card.completed .task-title { text-decoration: line-through; }
   .card.dismissed .task-title { text-decoration: line-through; color: #8b95a3; }
   .dismiss-btn { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #6b7280; font-size: 16px; cursor: pointer; padding: 2px 8px; border-radius: 4px; line-height: 1; opacity: 0; transition: opacity 0.15s; }
@@ -66,6 +68,8 @@
   .badge.source-hubspot { background: #ff7a59; color: white; }
   .badge.source-granola { background: #6b46c1; color: white; }
   .badge.source-nooks { background: #0f766e; color: white; }
+  .badge.source-custom { background: #064e3b; color: #a7f3d0; }
+  .badge.source-me { background: #064e3b; color: #a7f3d0; }
   .badge.priority-p1 { background: #dc2626; color: white; }
   .badge.priority-p2 { background: #d97706; color: white; }
   .badge.priority-p3 { background: #2563eb; color: white; }
@@ -124,6 +128,12 @@
   .project-card .pmeta { font-size: 11px; color: #6b7280; margin-top: 4px; padding-left: 16px; }
   .project-card .psummary { font-size: 11px; color: #9aa4b2; margin-top: 5px; padding-left: 16px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .project-card .psummary .pflag { color: #fbbf24; font-weight: 600; }
+  .project-card .pchecks { padding-left: 16px; margin-top: 6px; }
+  .project-card .pcheck { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: #c5ccd6; padding: 2px 0; cursor: pointer; line-height: 1.4; }
+  .project-card .pcheck input { margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .project-card .plog { padding-left: 16px; margin-top: 6px; border-top: 1px solid #2a3038; padding-top: 6px; }
+  .project-card .plog-h { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-bottom: 3px; }
+  .project-card .plog .pcheck span { text-decoration: line-through; color: #6b7280; }
   .project-card .pdel { position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: #6b7280; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; opacity: 0; line-height: 1; }
   .project-card:hover .pdel { opacity: 1; }
   .project-card .pdel:hover { color: #dc2626; background: #2a3038; }
@@ -199,6 +209,7 @@
       <button class="tab" data-tab="tasks" onclick="setTab('tasks')">Tasks <span class="count" id="count-tasks">0</span></button>
       <button class="tab" data-tab="review" onclick="setTab('review')">Review <span class="count" id="count-review">0</span></button>
       <button class="tab" data-tab="fyi" onclick="setTab('fyi')">FYI <span class="count" id="count-fyi">0</span></button>
+      <button class="tab" data-tab="custom" onclick="setTab('custom')">Custom <span class="count" id="count-custom">0</span></button>
       <button class="tab" data-tab="archive" onclick="setTab('archive')">Archive <span class="count" id="count-archive">0</span></button>
     </div>
 
@@ -220,7 +231,7 @@ let allItems = [];
 let allProjects = [];
 let openDrafts = {};
 let editingProjectId = null;
-let showHidden = { tasks: false, review: false, fyi: false };
+let showHidden = { tasks: false, review: false, fyi: false, custom: false };
 let archiveFilter = "month"; // "all" | "month" | "week"
 
 function setArchiveFilter(f) {
@@ -277,6 +288,15 @@ async function loadData() {
   }
 }
 
+// Local calendar date as YYYY-MM-DD, to match the sheet's created_date format.
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function timeAgo(iso) {
   if (!iso) return "";
   const then = new Date(iso).getTime();
@@ -285,6 +305,32 @@ function timeAgo(iso) {
   if (days < 1) return "Updated today";
   if (days === 1) return "Updated 1d ago";
   return `Updated ${days}d ago`;
+}
+
+// Parse a project's notes into a description + checklist bullets.
+// Bullets are markdown lines: "- [ ] open task" / "- [x] done task".
+// Everything else is the description (keeps the ⚠ … — flag behavior).
+function parseProjectNotes(notes) {
+  const lines = (notes || "").split(/\r?\n/);
+  const desc = [], bullets = [];
+  lines.forEach((ln, idx) => {
+    const m = ln.match(/^\s*-\s*\[([ xX])\]\s*(.*)$/);
+    if (m) bullets.push({ done: m[1].toLowerCase() === "x", text: m[2], idx });
+    else if (ln.trim()) desc.push(ln.trim());
+  });
+  return { lines, desc: desc.join(" "), bullets };
+}
+
+// Toggle a single project bullet and write the updated notes back to the projects sheet.
+async function toggleProjectBullet(id, idx, checked) {
+  const p = allProjects.find(x => x.id === id);
+  if (!p) return;
+  const lines = (p.notes || "").split(/\r?\n/);
+  lines[idx] = lines[idx].replace(/\[([ xX])\]/, "[" + (checked ? "x" : " ") + "]");
+  p.notes = lines.join("\n");
+  p.last_updated = new Date().toISOString();
+  renderProjects();
+  await postToSheet({ id, target: "projects", notes: p.notes, last_updated: p.last_updated });
 }
 
 function renderProjects() {
@@ -313,7 +359,7 @@ function renderProjects() {
             <option value="standby" ${status === "standby" ? "selected" : ""}>Standby</option>
             <option value="complete" ${status === "complete" ? "selected" : ""}>Complete</option>
           </select>
-          <textarea id="pe-notes-${p.id}" placeholder="Summary / notes (start with ⚠ … — to flag a risk)">${escapeHTML(p.notes || "")}</textarea>
+          <textarea id="pe-notes-${p.id}" placeholder="Summary / notes. Start with ⚠ … — to flag a risk. Add to-dos on their own lines as: - [ ] task">${escapeHTML(p.notes || "")}</textarea>
           <div class="pe-row">
             <button class="primary" onclick="saveProject('${p.id}')">Save</button>
             <button onclick="cancelEditProject()">Cancel</button>
@@ -322,11 +368,20 @@ function renderProjects() {
         </div>
       </div>`;
     }
-    const summaryHTML = p.notes ? `<div class="psummary">${formatSummary(p.notes)}</div>` : "";
+    const parsed = parseProjectNotes(p.notes);
+    const summaryHTML = parsed.desc ? `<div class="psummary">${formatSummary(parsed.desc)}</div>` : "";
+    const activeBullets = parsed.bullets.filter(b => !b.done);
+    const doneBullets = parsed.bullets.filter(b => b.done);
+    const checksHTML = activeBullets.length
+      ? `<div class="pchecks" onclick="event.stopPropagation()">${activeBullets.map(b => `<label class="pcheck"><input type="checkbox" onclick="event.stopPropagation();toggleProjectBullet('${p.id}',${b.idx},true)"><span>${escapeHTML(b.text)}</span></label>`).join("")}</div>`
+      : "";
+    const logHTML = doneBullets.length
+      ? `<div class="plog" onclick="event.stopPropagation()"><div class="plog-h">Log</div>${doneBullets.map(b => `<label class="pcheck"><input type="checkbox" checked onclick="event.stopPropagation();toggleProjectBullet('${p.id}',${b.idx},false)"><span>${escapeHTML(b.text)}</span></label>`).join("")}</div>`
+      : "";
     return `<div class="project-card ${status}" onclick="startEditProject('${p.id}')">
       <button class="pdel" title="Delete" onclick="event.stopPropagation();deleteProject('${p.id}')">×</button>
       <div class="pname">${escapeHTML(p.name || "(untitled)")}</div>
-      ${summaryHTML}
+      ${summaryHTML}${checksHTML}${logHTML}
       <div class="pmeta">${escapeHTML(timeAgo(p.last_updated))}</div>
     </div>`;
   }).join("");
@@ -387,6 +442,39 @@ function startAddProject() {
     target: "projects",
     row: newProject
   });
+}
+
+// Add a custom task to the board (bucket = "custom"). Uses the SAME insert
+// mechanism your "Add Project" button uses, just without a target so it lands
+// on the board sheet. Persists on refresh as long as your Apps Script handles
+// {action:"insert"} (the same handler project-add relies on).
+function addCustomTask() {
+  const title = prompt("New custom task:");
+  if (!title || !title.trim()) return;
+  const newItem = {
+    id: crypto.randomUUID(),
+    created_date: todayStr(),
+    bucket: "custom",
+    suggested_bucket: "",
+    confidence: "",
+    source: "custom",
+    from_ryan: "false",
+    from_internal: "false",
+    priority: "",
+    title: title.trim(),
+    context: "",
+    signals: "",
+    deadline: "",
+    draft: "",
+    article_summary_json: "",
+    source_url: "",
+    status: "new",
+    completed_at: ""
+  };
+  allItems.push(newItem);
+  if (currentTab !== "custom" && currentTab !== "all") setTab("custom");
+  else render();
+  postToSheet({ action: "insert", row: newItem });
 }
 
 function parseCSV(text) {
@@ -696,15 +784,23 @@ function hiddenChip(section, count) {
 function render() {
   const queue = allItems.filter(i => i.bucket === "needs_call");
   const rollover = allItems.filter(i => i.bucket === "rollover");
-  const tasks = allItems.filter(i => i.bucket === "tasks");
+  // Today's tasks: only rows created today. Prevents stale/just-completed
+  // bucket=="tasks" rows from prior days floating into Today and outranking
+  // the real priorities. Matches on the date prefix so it works whether
+  // created_date is a bare YYYY-MM-DD or a full ISO timestamp.
+  const today = todayStr();
+  const tasks = allItems.filter(i => i.bucket === "tasks" && (i.created_date || "").slice(0, 10) === today);
   const review = allItems.filter(i => i.bucket === "review");
   const fyi = allItems.filter(i => i.bucket === "fyi");
+  const custom = allItems.filter(i => i.bucket === "custom");
 
   // Visible-only counts for the tab badges
   document.getElementById("count-queue").textContent = queue.length;
   document.getElementById("count-tasks").textContent = (rollover.filter(i => !isHiddenItem(i)).length) + (tasks.filter(i => !isHiddenItem(i)).length);
   document.getElementById("count-review").textContent = review.filter(i => !isHiddenItem(i)).length;
   document.getElementById("count-fyi").textContent = fyi.filter(i => !isHiddenItem(i)).length;
+  const countCustomEl = document.getElementById("count-custom");
+  if (countCustomEl) countCustomEl.textContent = custom.filter(i => !isHiddenItem(i)).length;
   const archiveCount = allItems.filter(i => i.bucket !== "needs_call" && isHiddenItem(i) && withinArchiveWindow(i.completed_at)).length
     + allProjects.filter(p => p.status === "complete" && withinArchiveWindow(p.last_updated)).length;
   const countArchiveEl = document.getElementById("count-archive");
@@ -714,14 +810,15 @@ function render() {
   document.body.classList.toggle("show-hidden-tasks", showHidden.tasks);
   document.body.classList.toggle("show-hidden-review", showHidden.review);
   document.body.classList.toggle("show-hidden-fyi", showHidden.fyi);
+  document.body.classList.toggle("show-hidden-custom", showHidden.custom);
 
   // Highlight the queue tab if there are items
   const queueTab = document.getElementById("tab-queue");
   if (queue.length > 0) queueTab.classList.add("has-queue");
   else queueTab.classList.remove("has-queue");
 
-  const totalTasks = rollover.length + tasks.length;
-  const completed = [...rollover, ...tasks].filter(i => i.status === "done").length;
+  const totalTasks = rollover.length + tasks.length + custom.length;
+  const completed = [...rollover, ...tasks, ...custom].filter(i => i.status === "done").length;
   document.getElementById("completion-stat").textContent = `${completed}/${totalTasks}`;
 
   // Hidden counts per section
@@ -777,6 +874,17 @@ function render() {
       html += fyi.map(i => renderCard(i, false)).join("");
     } else if (currentTab === "fyi") {
       html += '<div class="empty-state">No FYI items today.</div>';
+    }
+  }
+  if (currentTab === "all" || currentTab === "custom") {
+    const hiddenCustomCount = custom.filter(isHiddenItem).length;
+    if (custom.length > 0 || currentTab === "custom") {
+      html += `<div class="section-header"><span class="dot"></span>Custom · your own tasks<button class="hidden-toggle" style="border-color:#1d4e89;color:#a8d5ff;" onclick="addCustomTask()">+ Add task</button>${hiddenChip("custom", hiddenCustomCount)}</div>`;
+      if (custom.length > 0) {
+        html += custom.map(i => renderCard(i, true)).join("");
+      } else {
+        html += '<div class="empty-state">No custom tasks yet — click "+ Add task" above.</div>';
+      }
     }
   }
   if (currentTab === "archive") {
